@@ -24,7 +24,7 @@
 use std::libc::*;
 use self::types::*;
 
-mod types {
+pub mod types {
     use std::libc::*;
     
     // Common types from OpenGL 1.1
