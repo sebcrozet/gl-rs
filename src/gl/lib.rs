@@ -20,6 +20,8 @@
 #[comment = "An OpenGL function loader."];
 #[license = "ASL2"];
 #[crate_type = "lib"];
+#[feature(globs)];
+#[feature(macro_rules)];
 
 use std::libc::*;
 use self::types::*;
