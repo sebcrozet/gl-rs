@@ -2527,7 +2527,7 @@ macro_rules! fn_mod(
             pub fn is_loaded() -> bool { unsafe { ::storage::$name.is_loaded } }
             
             #[inline]
-            pub fn load_with(loadfn: &fn(symbol: &str) -> Option<extern "C" fn()>) {
+            pub fn load_with(loadfn: |symbol: &str| -> Option<extern "C" fn()>) {
                 unsafe { ::storage::$name = ::FnPtr::new(loadfn($sym), ::failing::$name) }
             }
         }
@@ -3680,7 +3680,7 @@ mod failing {
 /// ~~~
 /// let gl = gl::load_with(glfw::get_proc_address);
 /// ~~~
-pub fn load_with(loadfn: &fn(symbol: &str) -> Option<extern "C" fn()>) {
+pub fn load_with(loadfn: |symbol: &str| -> Option<extern "C" fn()>) {
     ActiveShaderProgram::load_with(|s| loadfn(s));
     ActiveTexture::load_with(|s| loadfn(s));
     AttachShader::load_with(|s| loadfn(s));
