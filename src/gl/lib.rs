@@ -17,7 +17,7 @@
        author = "Brendan Zabarauskas",
        url = "https://github.com/bjz/gl-rs",
        vers = "0.1")];
-#[pkgid = "gl"];
+#[crate_id = "gl"];
 #[comment = "An OpenGL function loader."];
 #[license = "ASL2"];
 #[crate_type = "lib"];
