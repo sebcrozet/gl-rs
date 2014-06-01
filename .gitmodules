@@ -1,3 +1,9 @@
 [submodule "deps/khronos-api"]
 	path = deps/khronos-api
 	url = https://github.com/bjz/khronos-api.git
+[submodule "deps/glfw-rs"]
+	path = deps/glfw-rs
+	url = https://github.com/sebcrozet/glfw-rs
+[submodule "deps/sax-rs"]
+	path = deps/sax-rs
+	url = https://github.com/sebcrozet/sax-rs
