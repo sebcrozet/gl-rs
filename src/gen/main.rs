@@ -30,6 +30,7 @@
 //! - `$ wget --no-check-certificate https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/glx.xml`
 //! - `$ wget --no-check-certificate https://cvs.khronos.org/svn/repos/ogl/trunk/doc/registry/public/api/wgl.xml`
 
+extern crate debug;
 extern crate getopts;
 
 #[phase(syntax, link)]
@@ -59,7 +60,7 @@ fn main() {
         optopt("", "xml", "The xml spec file (<namespace>.xml by default)", ""),
     ];
 
-    let os_args = os::args().iter().map(|x| x.to_strbuf()).collect::<Vec<StrBuf>>();
+    let os_args = os::args().iter().map(|x| x.to_string()).collect::<Vec<String>>();
     let args = match getopts(os_args.as_slice(), opts) {
         Ok(a) => a,
         Err(x) => fail!("Error: {}\n{}", x.to_err_msg(), usage("glrsgen", opts)),
@@ -70,7 +71,7 @@ fn main() {
         return;
     }
 
-    let ns = match args.opt_str("namespace").unwrap_or("gl".to_strbuf()).as_slice() {
+    let ns = match args.opt_str("namespace").unwrap_or("gl".to_string()).as_slice() {
         "gl"  => Gl,
         "glx" => fail!("glx generation unimplemented"),
         "wgl" => fail!("wgl generation unimplemented"),
@@ -78,7 +79,7 @@ fn main() {
     };
 
     let path = Path::new(
-        args.opt_str("xml").unwrap_or(format_strbuf!("{}.xml", ns))
+        args.opt_str("xml").unwrap_or(format!("{}.xml", ns))
     );
 
     let filter = if args.opt_present("full") {
@@ -86,9 +87,9 @@ fn main() {
     } else {
         Some(Filter {
             extensions: args.opt_strs("extension"),
-            profile: args.opt_str("profile").unwrap_or("core".to_strbuf()),
-            version: args.opt_str("version").unwrap_or("4.3".to_strbuf()),
-            api: args.opt_str("api").unwrap_or("gl".to_strbuf()),
+            profile: args.opt_str("profile").unwrap_or("core".to_string()),
+            version: args.opt_str("version").unwrap_or("4.3".to_string()),
+            api: args.opt_str("api").unwrap_or("gl".to_string()),
         })
     };
 
@@ -96,7 +97,7 @@ fn main() {
         File::open(&path).ok()
             .expect(format!("Could not read {}", path.display()))
             .read_to_str().ok()
-                .expect("registry source not utf8!"), ns, filter
+            .expect("registry source not utf8!").as_slice(), ns, filter
     );
 
     Generator::write(&mut io::stdout(), &reg, ns);
@@ -111,58 +112,58 @@ struct Generator<'a, W> {
     indent: uint,
 }
 
-fn gen_binding_ident(binding: &Binding, use_idents: bool) -> StrBuf {
+fn gen_binding_ident(binding: &Binding, use_idents: bool) -> String {
     // FIXME: use &'a str when https://github.com/mozilla/rust/issues/11869 is
     // fixed
     if use_idents {
         match binding.ident.as_slice() {
-            "in" => "in_".to_strbuf(),
-            "ref" => "ref_".to_strbuf(),
-            "type" => "type_".to_strbuf(),
-            ident => ident.to_strbuf(),
+            "in" => "in_".to_string(),
+            "ref" => "ref_".to_string(),
+            "type" => "type_".to_string(),
+            ident => ident.to_string(),
         }
     } else {
-        "_".to_strbuf()
+        "_".to_string()
     }
 }
 
-fn gen_binding(binding: &Binding, use_idents: bool) -> StrBuf {
-    format_strbuf!("{}: {}",
+fn gen_binding(binding: &Binding, use_idents: bool) -> String {
+    format!("{}: {}",
         gen_binding_ident(binding, use_idents),
         ty::to_rust_ty(binding.ty.as_slice()))
 }
 
-fn gen_param_list(cmd: &Cmd, use_idents: bool) -> StrBuf {
+fn gen_param_list(cmd: &Cmd, use_idents: bool) -> String {
     cmd.params.iter()
         .map(|b| gen_binding(b, use_idents))
-        .collect::<Vec<StrBuf>>()
-        .connect(", ").to_strbuf()
+        .collect::<Vec<String>>()
+        .connect(", ").to_string()
 }
 
-fn gen_param_ident_list(cmd: &Cmd) -> StrBuf {
+fn gen_param_ident_list(cmd: &Cmd) -> String {
     cmd.params.iter()
         .map(|b| gen_binding_ident(b, true))
-        .collect::<Vec<StrBuf>>()
-        .connect(", ").to_strbuf()
+        .collect::<Vec<String>>()
+        .connect(", ").to_string()
 }
 
-fn gen_param_ty_list(cmd: &Cmd) -> StrBuf {
+fn gen_param_ty_list(cmd: &Cmd) -> String {
     cmd.params.iter()
         .map(|b| ty::to_rust_ty(b.ty.as_slice()))
         .collect::<Vec<&str>>()
-        .connect(", ").to_strbuf()
+        .connect(", ").to_string()
 }
 
-fn gen_return_suffix(cmd: &Cmd) -> StrBuf {
+fn gen_return_suffix(cmd: &Cmd) -> String {
     ty::to_return_suffix(ty::to_rust_ty(cmd.proto.ty.as_slice()))
 }
 
-fn gen_symbol_name(ns: &Ns, cmd: &Cmd) -> StrBuf {
+fn gen_symbol_name(ns: &Ns, cmd: &Cmd) -> String {
     (match *ns {
         Gl => "gl",
         Glx => "glx",
         Wgl => "wgl",
-    }).to_strbuf().append(cmd.proto.ident.as_slice())
+    }).to_string().append(cmd.proto.ident.as_slice())
 }
 
 impl<'a, W: Writer> Generator<'a, W> {
@@ -202,7 +203,7 @@ impl<'a, W: Writer> Generator<'a, W> {
 
     fn write_enum(&mut self, enm: &Enum) {
         let ident = if (enm.ident.as_slice()[0] as char).is_digit() {
-            format_strbuf!("_{}", enm.ident)
+            format!("_{}", enm.ident)
         } else {
             enm.ident.clone()
         };
@@ -215,7 +216,7 @@ impl<'a, W: Writer> Generator<'a, W> {
             }
         };
 
-        self.write_line(format!("pub static {}: {} = {};", ident, ty, enm.value))
+        self.write_line(format!("pub static {}: {} = {};", ident, ty, enm.value).as_slice())
     }
 
     fn write_enums(&mut self) {
@@ -241,7 +242,7 @@ impl<'a, W: Writer> Generator<'a, W> {
         self.write_line("// limitations under the License.");
         self.write_line("");
         let ns = self.ns.to_str();
-        self.write_line(format!(r#"\#![crate_id = "github.com/bjz/gl-rs\#{}:0.1"]"#, ns));
+        self.write_line(format!(r#"\#![crate_id = "github.com/bjz/gl-rs\#{}:0.1"]"#, ns).as_slice());
         self.write_line("#![comment = \"An OpenGL function loader.\"]");
         self.write_line("#![license = \"ASL2\"]");
         self.write_line("#![crate_type = \"lib\"]");
@@ -311,7 +312,7 @@ impl<'a, W: Writer> Generator<'a, W> {
                 c.proto.ident,
                 gen_param_ty_list(c),
                 gen_return_suffix(c)
-            ));
+            ).as_slice());
         }
         self.decr_indent();
         self.write_line("}");
@@ -329,7 +330,7 @@ impl<'a, W: Writer> Generator<'a, W> {
                 c.proto.ident,
                 gen_param_ident_list(c),
                 if !c.is_safe { "" } else { " }" }
-            ));
+            ).as_slice());
         }
     }
 
@@ -360,7 +361,7 @@ impl<'a, W: Writer> Generator<'a, W> {
                 c.proto.ident,
                 gen_param_list(c, true),
                 gen_return_suffix(c)
-            ));
+            ).as_slice());
         };
         self.decr_indent();
         self.write_line("}");
@@ -386,7 +387,7 @@ impl<'a, W: Writer> Generator<'a, W> {
             self.write_line(format!(
                 "fn_mod!({}, \"{}\")",
                 c.proto.ident,
-                gen_symbol_name(&ns, c)));
+                gen_symbol_name(&ns, c)).as_slice());
         }
     }
 
@@ -400,7 +401,7 @@ impl<'a, W: Writer> Generator<'a, W> {
         self.write_line("pub fn load_with(loadfn: |symbol: &str| -> Option<extern \"system\" fn()>) {");
         self.incr_indent();
         for c in self.registry.cmd_iter() {
-            self.write_line(format!("{}::load_with(|s| loadfn(s));", c.proto.ident))
+            self.write_line(format!("{}::load_with(|s| loadfn(s));", c.proto.ident).as_slice())
         }
         self.decr_indent();
         self.write_line("}");
